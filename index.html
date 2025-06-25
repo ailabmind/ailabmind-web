@@ -4,17 +4,27 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Lab Mind | IA para Servicio al Cliente</title>
-  <!-- TailwindCSS + Google Fonts + Font Awesome -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Nueva fuente: Outfit -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"/>
   <style>
-    body, html {
-      margin: 0; padding: 0;
+    /* Asegura que html y body tomen la altura completa y manejan el scroll-padding */
+    html {
+      scroll-behavior: smooth; /* Para un scroll suave a los anclajes */
+      scroll-padding-top: 6rem; /* Deja espacio para el header fijo al navegar a anclajes */
+      box-sizing: border-box; /* Incluye padding y border en el tamaño total */
+    }
+
+    body {
+      height: 100%;
+      min-height: 100vh; /* Usa vh para la altura completa del viewport */
+      margin: 0;
+      padding: 6rem 0 0 0; /* Añade padding-top al body para desplazar el contenido bajo el header */
       font-family: 'Outfit', sans-serif; /* Cambiado a Outfit */
       color: #e0e0e0;
       overflow-x: hidden;
+      position: relative;
+      box-sizing: border-box; /* Incluye padding y border en el tamaño total */
     }
     /* Fondo animado */
     #animated-background-container {
@@ -23,13 +33,19 @@
       z-index: -2;
     }
     #backgroundCanvas {
-      position: absolute; inset: 0; opacity: 0.5;
+      position: absolute; inset: 0; opacity: 0.25; /* Opacidad del fondo ajustada a 25% */
     }
     /* Header fijo - Estilos actualizados por el usuario */
     header {
-      /* Estas propiedades las ha proporcionado el usuario para el header */
-      height: auto; /* ajusta según contenido */
-      padding-top: 0.25rem;
+      position: fixed; /* Asegura que se mantenga fijo */
+      inset-x: 0;
+      top: 0;
+      background: rgba(0, 0, 0, 0.7); /* bg-black bg-opacity-70 */
+      backdrop-filter: blur(8px); /* Aumentado el blur para mayor efecto */
+      -webkit-backdrop-filter: blur(8px); /* Compatibilidad con Safari */
+      z-index: 10;
+      height: 6rem; /* h-24 -> 96px = 6rem, altura fija del header */
+      padding-top: 0.25rem; /* Mantener estos para la estética interna del header */
       padding-bottom: 0.25rem;
     }
 
@@ -37,8 +53,6 @@
     nav a {
       transition: color .2s, background .2s;
       border-radius: .25rem;
-      /* padding ya está en el HTML, pero lo dejo aquí por si se necesita sobrescribir */
-      /* padding: 0.5rem 0.75rem; */
     }
 
     nav a:hover {
@@ -52,10 +66,39 @@
       }
     }
 
+    /* Contenedor principal del main */
+    main {
+        min-height: calc(100vh - 6rem); /* Asegura que main tome la altura necesaria debajo del header */
+        position: relative; /* Mantiene el posicionamiento relativo para los hijos */
+        z-index: 1; /* Prioriza el main sobre el fondo (-2) */
+    }
+
     /* Secciones */
-    /* Se ha ampliado el padding-top para aumentar el espacio entre el menú y el contenido */
-    .page { display: none; padding-top: 10rem; } /* Aumentado a 10rem para mayor espacio */
-    .page.active { display: block; }
+    .page {
+      display: none;
+    }
+    .page.active {
+      display: block; /* Asegura visibilidad del contenido */
+      min-height: 100%; /* Hace que la página activa ocupe la altura completa de su padre (main) */
+      padding-bottom: 4rem; /* Un poco de padding extra para la parte inferior de la sección */
+      box-sizing: border-box; /* Importante para que min-height incluya el padding */
+    }
+    /* Asegurar que el contenido dentro de .page ocupe el ancho completo */
+    .page > div {
+      width: 100%;
+    }
+
+    /* Estilos de fondo para la sección de soluciones */
+    #solutions {
+        background: linear-gradient(to bottom, #1e1b4b, #3b0764); /* Fondo por defecto (español) */
+        transition: background 0.3s ease; /* Transición suave para el cambio de fondo */
+    }
+    /* Estilo de fondo transparente para la sección de soluciones en inglés */
+    #solutions.english-transparent-bg {
+        background: linear-gradient(to bottom, rgba(30, 27, 75, 0.25), rgba(59, 7, 100, 0.25)); /* 25% de opacidad */
+    }
+
+
     /* Botones */
     .btn-primary {
       background-color: #5856EC; color: #fff;
@@ -91,6 +134,11 @@
     footer {
       background: #111; color: #aaa;
       padding: 2rem 1rem; font-size: .85rem;
+      position: relative;
+      bottom: 0;
+      width: 100%;
+      box-sizing: border-box; /* Asegura que el padding no añada al ancho total */
+      z-index: 1; /* Asegura que el footer también esté sobre el fondo */
     }
     footer a { color: #aaa; transition: color .2s; }
     footer a:hover { color: #fff; }
@@ -129,730 +177,614 @@
   </style>
 </head>
 <body>
-
-  <!-- Fondo animado -->
-  <div id="animated-background-container">
-    <canvas id="backgroundCanvas"></canvas>
-  </div>
-
-  <!-- Header -->
-  <header class="fixed inset-x-0 top-0 bg-black bg-opacity-70 backdrop-blur-md z-10">
-    <div class="flex items-center justify-between w-full max-w-7xl mx-auto px-6 py-3">
-      <!-- Logo + título -->
-      <div class="flex items-center space-x-3">
-        <img src="/img/logo.png" alt="AI Lab Mind"
-             alt="AI Lab Mind"
-             class="w-10 h-10 rounded-full"/>
-        <span class="text-xl font-bold text-white" /* Cambiado text-2xl a text-xl */
-              data-es="AI Lab Mind"
-              data-en="AI Lab Mind">AI Lab Mind</span>
-      </div>
-
-      <!-- Navegación principal -->
-      <nav class="hidden md:flex flex-grow justify-center space-x-10 uppercase text-sm">
-        <a href="#home" class="px-2 py-1 hover:text-white text-gray-300" data-es="Inicio" data-en="Home">Inicio</a>
-        <a href="#focus" class="px-2 py-1 hover:text-white text-gray-300" data-es="Enfoque" data-en="Our Approach">Enfoque</a>
-        <a href="#solutions" class="px-2 py-1 hover:text-white text-gray-300" data-es="Soluciones" data-en="Solutions">Soluciones</a>
-        <!-- Enlace del Blog ahora a LinkedIn -->
-        <a href="https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true" target="_blank" class="px-2 py-1 hover:text-white text-gray-300" data-es="Blog" data-en="Blog">Blog</a>
-        <a href="#contact" class="px-2 py-1 hover:text-white text-gray-300" data-es="Contáctanos" data-en="Contact Us">Contáctanos</a>
-        <a href="#faq" class="px-2 py-1 hover:text-white text-gray-300" data-es="FAQ" data-en="FAQ">FAQ</a>
-      </nav>
-
-      <!-- Botón de idioma + móvil -->
-      <div class="flex items-center space-x-4">
-        <button id="lang-toggle"
-                class="hidden md:inline-block bg-blue-600 hover:bg-blue-800 text-white px-3 py-1 rounded">
+<div id="animated-background-container">
+<canvas id="backgroundCanvas"></canvas>
+</div>
+<header class="fixed inset-x-0 top-0 bg-black bg-opacity-70 backdrop-blur-md z-10 h-24">
+<div class="flex items-center justify-between w-full max-w-7xl mx-auto px-6 py-3">
+<div class="flex items-center space-x-3">
+<img alt="AI Lab Mind Logo" class="w-10 h-10 rounded-full" src="/img/logo.png"/>
+<span class="text-xl font-bold text-white" data-key="brand">AI Lab Mind</span>
+</div>
+<nav class="hidden md:flex flex-grow justify-center space-x-10 uppercase text-sm">
+  <a class="px-2 py-1 hover:text-white text-gray-300" href="#home" data-key="home"></a>
+  <a class="px-2 py-1 hover:text-white text-gray-300" href="#focus" data-key="approach"></a>
+  <a class="px-2 py-1 hover:text-white text-gray-300" href="#solutions" data-key="solutions"></a>
+  <a class="px-2 py-1 hover:text-white text-gray-300" href="#" target="_blank" data-key="blog" data-es-href="https://ailabmind1.systeme.io/fc2debf7" data-en-href="https://ailabmind1.systeme.io/posts"></a>
+  <a class="px-2 py-1 hover:text-white text-gray-300" href="#contact" data-key="contact"></a>
+  <a class="px-2 py-1 hover:text-white text-gray-300" href="#faq" data-key="faq"></a>
+</nav>
+<div class="flex items-center space-x-4">
+<button class="hidden md:inline-block bg-blue-600 hover:bg-blue-800 text-white px-3 py-1 rounded" id="lang-toggle">
           ES
         </button>
-        <button id="mobile-menu-button"
-                class="md:hidden text-white text-2xl">
+<button class="md:hidden text-white text-2xl" id="mobile-menu-button">
           ☰
         </button>
-      </div>
+</div>
+</div>
+</header>
+
+<main class="container mx-auto px-4">
+    <section class="page active" id="home">
+    <div class="lang-content active" data-lang="es">
+    <div class="text-center py-16">
+    <h1 class="text-5xl md:text-6xl font-extrabold mb-4">
+                        Revoluciona tu Atención al Cliente con Inteligencia Artificial
+                    </h1>
+    <p class="text-xl text-white/80 mb-8 max-w-3xl mx-auto">
+                        Eficiencia sin precedentes, reducción drástica de costos y mejor experiencia del cliente.
+                    </p>
+    <div class="flex justify-center gap-4 flex-wrap">
+    <a class="btn-primary" data-en-href="https://koalendar.com/e/ailabmind-en" data-es-href="https://koalendar.com/e/ailabmind-es" href="#" target="_blank">Solicitar Demostración Gratuita</a>
+    <a class="btn-outline glow-cyan" data-en-href="#solutions" data-es-href="#solutions" href="#solutions">Explora Nuestras Soluciones</a>
     </div>
-  </header>
-
-  <!-- Contenido principal -->
-  <main class="container mx-auto px-4">
-
-    <!-- HOME -->
-    <section id="home" class="page active">
-        <!-- Contenido en Español -->
-        <div class="lang-content active" data-lang="es">
-            <!-- Eliminado py-12 de este div para que padding-top de .page sea dominante -->
-            <div class="text-center py-16">
-                <h1 class="text-5xl md:text-6xl font-extrabold mb-4">
-                    Revoluciona tu Atención al Cliente con Inteligencia Artificial
-                </h1>
-                <p class="text-xl text-white/80 mb-8 max-w-3xl mx-auto">
-                    Eficiencia sin precedentes, reducción drástica de costos y mejor experiencia del cliente.
-                </p>
-                <div class="flex justify-center gap-4 flex-wrap">
-                    <a href="#" target="_blank" class="btn-primary"
-                       data-es-href="https://koalendar.com/e/ailabmind-es"
-                       data-en-href="https://koalendar.com/e/ailabmind-en">Solicitar Demostración Gratuita</a>
-                    <!-- Modificado el data-es-href y data-en-href para que apunte a #solutions -->
-                    <a href="#solutions" class="btn-outline glow-cyan"
-                       data-es-href="#solutions"
-                       data-en-href="#solutions">Explora Nuestras Soluciones</a>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 py-16">
-                <!-- Mike -->
-                <div class="bg-black/50 p-8 rounded-lg border border-white/20 flex flex-col items-center agent-card">
-                    <img src="/img/mike.png" alt="Mike" class="w-40 h-40 rounded-full mb-4 object-cover"/>
-                    <h3 class="text-2xl font-semibold mb-1">Mike</h3>
-                    <p class="text-sm text-[#5AC8FA] mb-4">Agente de Voz Masculino</p>
-                    <p class="text-white/80 mb-4 text-center">
-                        Confiable, ágil y estratégico. Mike responde llamadas, califica prospectos
-                        y agenda citas con precisión, sin perder el toque humano.
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 py-16">
+    <div class="bg-black/50 p-8 rounded-lg border border-white/20 flex flex-col items-center agent-card">
+    <img alt="Mike" class="w-40 h-40 rounded-full mb-4 object-cover" src="/img/mike.png"/>
+    <h3 class="text-2xl font-semibold mb-1">Mike</h3>
+    <p class="text-sm text-[#5AC8FA] mb-4">Agente de Voz Masculino</p>
+    <p class="text-white/80 mb-4 text-center">
+                            Confiable, ágil y estratégico. Mike responde llamadas, califica prospectos
+                            y agenda citas con precisión, sin perder el toque humano.
+                        </p>
+    <ul class="list-disc list-inside text-white/80 mb-6 space-y-1">
+    <li>Responde llamadas con voz realista</li>
+    <li>Califica prospectos en segundos</li>
+    <li>Agenda automáticamente por WhatsApp</li>
+    </ul>
+    <button class="btn-primary uppercase mike-btn" id="mike-btn-es">Probar con Mike</button>
+    <audio id="mike-audio-es" src="/audio/mike-es.mp3" preload="auto"></audio>
+    <audio id="mike-audio-en" src="/audio/mike-en.mp3" preload="auto"></audio>
+    </div>
+    <div class="bg-black/50 p-8 rounded-lg border border-white/20 flex flex-col items-center agent-card">
+    <img alt="Iris" class="w-40 h-40 rounded-full mb-4 object-cover" src="/img/iris.png"/>
+    <h3 class="text-2xl font-semibold mb-1">Iris</h3>
+    <p class="text-sm text-pink-300 mb-4">Agente de Voz Femenina</p>
+    <p class="text-white/80 mb-4 text-center">
+                            Iris es nuestra agente de voz femenina con personalidad empática y creativa. Perfecta para responder preguntas y ofrecer atencion al cliente.
+                        </p>
+    <ul class="list-disc list-inside text-white/80 mb-6 space-y-1">
+    <li>Inteligencia emocional avanzada</li>
+    <li>Capacidades educativas</li>
+    <li>Interacción social natural</li>
+    </ul>
+    <button class="btn-primary uppercase iris-btn" id="iris-btn-es">Hablar con Iris</button>
+    <audio id="iris-audio-es" src="/audio/iris-es.mp3" preload="auto"></audio>
+    <audio id="iris-audio-en" src="/audio/iris-en.mp3" preload="auto"></audio>
+    </div>
+    </div>
+    <div class="text-center px-6 py-12 bg-white/10 rounded-lg border border-white/20 mb-16">
+    <h3 class="text-2xl font-semibold mb-4 blue-outline">
+                        El servicio al cliente obsoleto te cuesta caro
+                    </h3>
+    <p class="text-white/80 max-w-2xl mx-auto leading-relaxed">
+                        ¿Costos fijos altos? ¿Agentes saturados? ¿IA que no funciona?<br/>
+                        Nuestra IA fiable optimiza operaciones, reduce costos y brinda asistencia 24/7.
                     </p>
-                    <ul class="list-disc list-inside text-white/80 mb-6 space-y-1">
-                        <li>Responde llamadas con voz realista</li>
-                        <li>Califica prospectos en segundos</li>
-                        <li>Agenda automáticamente por WhatsApp</li>
-                    </ul>
-                    <button id="mike-btn" class="btn-primary uppercase">Probar con Mike</button>
-                    <audio id="mike-audio-es" src="https://example.com/audio/mike_es.mp3"></audio>
-                    <audio id="mike-audio-en" src="https://example.com/audio/mike_en.mp3"></audio>
-                </div>
-                <!-- Iris -->
-                <div class="bg-black/50 p-8 rounded-lg border border-white/20 flex flex-col items-center agent-card">
-                    <img src="/img/iris.png" alt="Iris" class="w-40 h-40 rounded-full mb-4 object-cover"/>
-                    <h3 class="text-2xl font-semibold mb-1">Iris</h3>
-                    <p class="text-sm text-pink-300 mb-4">Agente de Voz Femenina</p>
-                    <p class="text-white/80 mb-4 text-center">
-                        Iris es nuestra agente de voz femenina con personalidad empática y creativa.
+    </div>
+    </div>
+    <div class="lang-content" data-lang="en">
+    <div class="text-center py-16">
+    <h1 class="text-5xl md:text-6xl font-extrabold mb-4">
+                        Revolucionary Customer Service with Artificial Intelligence
+                    </h1>
+    <p class="text-xl text-white/80 mb-8 max-w-3xl mx-auto">
+                        Unprecedented efficiency, drastic cost reduction, and improved customer experience.
                     </p>
-                    <ul class="list-disc list-inside text-white/80 mb-6 space-y-1">
-                        <li>Inteligencia emocional avanzada</li>
-                        <li>Capacidades educativas</li>
-                        <li>Interacción social natural</li>
-                    </ul>
-                    <button id="iris-btn" class="btn-primary uppercase">Hablar con Iris</button>
-                    <audio id="iris-audio-es" src="https://example.com/audio/iris_es.mp3"></audio>
-                    <audio id="iris-audio-en" src="https://example.com/audio/iris_en.mp3"></audio>
-                </div>
-            </div>
-            <div class="text-center px-6 py-12 bg-white/10 rounded-lg border border-white/20 mb-16">
-                <h3 class="text-2xl font-semibold mb-4 blue-outline">
-                    El servicio al cliente obsoleto te cuesta caro
-                </h3>
-                <p class="text-white/80 max-w-2xl mx-auto leading-relaxed">
-                    ¿Costos fijos altos? ¿Agentes saturados? ¿IA que no funciona?<br/>
-                    Nuestra IA fiable optimiza operaciones, reduce costos y brinda asistencia 24/7.
-                </p>
-            </div>
-        </div>
-
-        <!-- Contenido en Inglés -->
-        <div class="lang-content" data-lang="en">
-            <!-- Eliminado py-12 de este div para que padding-top de .page sea dominante -->
-            <div class="text-center py-16">
-                <h1 class="text-5xl md:text-6xl font-extrabold mb-4">
-                    Revolutionize Your Customer Service with Artificial Intelligence
-                </h1>
-                <p class="text-xl text-white/80 mb-8 max-w-3xl mx-auto">
-                    Unprecedented efficiency, drastic cost reduction, and improved customer experience.
-                </p>
-                <div class="flex justify-center gap-4 flex-wrap">
-                    <a href="#" target="_blank" class="btn-primary"
-                       data-es-href="https://koalendar.com/e/ailabmind-es"
-                       data-en-href="https://koalendar.com/e/ailabmind-en">Request a Free Demo</a>
-                    <!-- Modificado el data-es-href y data-en-href para que apunte a #solutions -->
-                    <a href="#solutions" class="btn-outline glow-cyan"
-                       data-es-href="#solutions"
-                       data-en-href="#solutions">Explore Our Solutions</a>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 py-16">
-                <!-- Mike -->
-                <div class="bg-black/50 p-8 rounded-lg border border-white/20 flex flex-col items-center agent-card">
-                    <img src="img/mike.jpg" alt="Mike" class="w-40 h-40 rounded-full mb-4 object-cover"/>
-                    <h3 class="text-2xl font-semibold mb-1">Mike</h3>
-                    <p class="text-sm text-[#5AC8FA] mb-4">Male Voice Agent</p>
-                    <p class="text-white/80 mb-4 text-center">
-                        Reliable, agile, and strategic. Mike answers calls, qualifies leads,
-                        and schedules appointments with precision, without losing the human touch.
+    <div class="flex justify-center gap-4 flex-wrap">
+    <a class="btn-primary" data-en-href="https://koalendar.com/e/ailabmind-en" data-es-href="https://koalendar.com/e/ailabmind-es" href="#" target="_blank">Request a Free Demo</a>
+    <a class="btn-outline glow-cyan" data-en-href="#solutions" data-es-href="#solutions" href="#solutions">Explore Our Solutions</a>
+    </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 py-16">
+    <div class="bg-black/50 p-8 rounded-lg border border-white/20 flex flex-col items-center agent-card">
+    <img alt="Mike" class="w-40 h-40 rounded-full mb-4 object-cover" src="/img/mike.png"/>
+    <h3 class="text-2xl font-semibold mb-1">Mike</h3>
+    <p class="text-sm text-[#5AC8FA] mb-4">Male Voice Agent</p>
+    <p class="text-white/80 mb-4 text-center">
+                            Reliable, agile, and strategic. Mike answers calls, qualifies leads,
+                            and schedules appointments with precision, without losing the human touch.
+                        </p>
+    <ul class="list-disc list-inside text-white/80 mb-6 space-y-1">
+    <li>Answers calls with realistic voice</li>
+    <li>Qualifies prospects in seconds</li>
+    <li>Schedules automatically via WhatsApp</li>
+    </ul>
+    <button class="btn-primary uppercase mike-btn" id="mike-btn-en">Try with Mike</button>
+    <audio id="mike-audio-es" src="/audio/mike-es.mp3" preload="auto"></audio>
+    <audio id="mike-audio-en" src="/audio/mike-en.mp3" preload="auto"></audio>
+    </div>
+    <div class="bg-black/50 p-8 rounded-lg border border-white/20 flex flex-col items-center agent-card">
+    <img alt="Iris" class="w-40 h-40 rounded-full mb-4 object-cover" src="/img/iris.png"/>
+    <h3 class="text-2xl font-semibold mb-1">Iris</h3>
+    <p class="text-sm text-pink-300 mb-4">Female Voice Agent</p>
+    <p class="text-white/80 mb-4 text-center">
+                            Iris is our female voice agent with an empathetic and creative personality. Perfect for answering questions and providing customer service.
+                        </p>
+    <ul class="list-disc list-inside text-white/80 mb-6 space-y-1">
+    <li>Inteligencia emocional avanzada</li>
+    <li>Capacidades educativas</li>
+    <li>Interacción social natural</li>
+    </ul>
+    <button class="btn-primary uppercase iris-btn" id="iris-btn-en">Talk to Iris</button>
+    <audio id="iris-audio-es" src="/audio/iris-es.mp3" preload="auto"></audio>
+    <audio id="iris-audio-en" src="/audio/iris-en.mp3" preload="auto"></audio>
+    </div>
+    </div>
+    <div class="text-center px-6 py-12 bg-white/10 rounded-lg border border-white/20 mb-16">
+    <h3 class="text-2xl font-semibold mb-4 blue-outline">
+                        Outdated customer service costs you dearly
+                    </h3>
+    <p class="text-white/80 max-w-2xl mx-auto leading-relaxed">
+                        High fixed costs? Overwhelmed agents? AI that doesn't work?<br/>
+                        Our reliable AI optimizes operations, reduces costs and provides 24/7 assistance.
                     </p>
-                    <ul class="list-disc list-inside text-white/80 mb-6 space-y-1">
-                        <li>Answers calls with realistic voice</li>
-                        <li>Qualifies prospects in seconds</li>
-                        <li>Schedules automatically via WhatsApp</li>
-                    </ul>
-                    <button id="mike-btn" class="btn-primary uppercase">Try with Mike</button>
-                    <audio id="mike-audio-es" src="https://example.com/audio/mike_es.mp3"></audio>
-                    <audio id="mike-audio-en" src="https://example.com/audio/mike_en.mp3"></audio>
-                </div>
-                <!-- Iris -->
-                <div class="bg-black/50 p-8 rounded-lg border border-white/20 flex flex-col items-center agent-card">
-                    <img src="img/iris.jpg" alt="Iris" class="w-40 h-40 rounded-full mb-4 object-cover"/>
-                    <h3 class="text-2xl font-semibold mb-1">Iris</h3>
-                    <p class="text-sm text-pink-300 mb-4">Female Voice Agent</p>
-                    <p class="text-white/80 mb-4 text-center">
-                        Iris is our female voice agent with an empathetic and creative personality.
+    </div>
+    </div>
+    </section>
+    <section class="page" id="focus">
+    <div class="lang-content active" data-lang="es">
+    <div class="max-w-3xl mx-auto space-y-6 py-16">
+    <h2 class="text-4xl font-extrabold text-center">Nuestra Historia: Haciendo la IA Accesible para Todos</h2>
+    <p class="text-white/80 text-center">
+                        Nos enfocamos en las personas, no solo en la tecnología.<br/>
+                        “¿Por qué solo las grandes empresas deberían beneficiarse de estas innovaciones?”
                     </p>
-                    <ul class="list-disc list-inside text-white/80 mb-6 space-y-1">
-                        <li>Inteligencia emocional avanzada</li>
-                        <li>Capacidades educativas</li>
-                        <li>Interacción social natural</li>
-                    </ul>
-                    <button id="iris-btn" class="btn-primary uppercase">Talk to Iris</button>
-                    <audio id="iris-audio-es" src="https://example.com/audio/iris_es.mp3"></audio>
-                    <audio id="iris-audio-en" src="https://example.com/audio/iris_en.mp3"></audio>
-                </div>
-            </div>
-            <div class="text-center px-6 py-12 bg-white/10 rounded-lg border border-white/20 mb-16">
-                <h3 class="text-2xl font-semibold mb-4 blue-outline">
-                    Outdated customer service costs you dearly
-                </h3>
-                <p class="text-white/80 max-w-2xl mx-auto leading-relaxed">
-                    High fixed costs? Overwhelmed agents? AI that doesn't work?<br/>
-                    Our reliable AI optimizes operations, reduces costs and provides 24/7 assistance.
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ENFOQUE / OUR APPROACH -->
-    <section id="focus" class="page">
-        <!-- Contenido en Español -->
-        <div class="lang-content active" data-lang="es">
-            <div class="max-w-3xl mx-auto space-y-6 py-16">
-                <h2 class="text-4xl font-extrabold text-center">Nuestra Historia: Haciendo la IA Accesible para Todos</h2>
-                <p class="text-white/80 text-center">
-                    Nos enfocamos en las personas, no solo en la tecnología.<br/>
-                    “¿Por qué solo las grandes empresas deberían beneficiarse de estas innovaciones?”
-                </p>
-                <p class="text-white/80">
-                    Era evidente que no existían herramientas digitales de IA pensadas para la escala y el presupuesto
-                    de un pequeño negocio. Ver cómo el potencial de la IA quedaba fuera del alcance de quienes más
-                    lo necesitaban fue una motivación poderosa.
-                </p>
-                <p class="text-white/80">
-                    Así nació AI Lab Mind. Democratizamos la IA, creando herramientas efectivas, intuitivas y accesibles
-                    para PYMES, sin importar su nivel tecnológico.
-                </p>
-                <p class="text-white/80">
-                    Queremos que cada negocio ofrezca atención excepcional, optimice operaciones y compita en igualdad
-                    de condiciones en el panorama digital actual.
-                </p>
-                <p class="text-white/80">
-                    Creemos en el poder de la IA para impulsar tu crecimiento. Estamos aquí para cumplir esa promesa.
-                    Únete y descubre cómo la IA puede transformar tu empresa.
-                </p>
-                <div class="bg-white/10 backdrop-blur-md rounded-lg p-6">
-                    <h3 class="text-2xl font-semibold mb-4">Beneficios Clave</h3>
-                    <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-white">
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Atención al cliente automatizada que parece humana
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Reducción de costos operativos sin perder calidad
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Integración rápida con WhatsApp, web o teléfono
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Mejora en tiempos de respuesta y satisfacción
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Sin necesidad de conocimientos técnicos
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Herramientas diseñadas para PYMES
-                        </li>
-                    </ul>
-                </div>
-                <div class="text-center mt-4">
-                    <a href="#contact" class="btn-primary"
-                       data-es-href="#contact"
-                       data-en-href="#contact">Descubre Cómo Puede Funcionar para Ti</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Contenido en Inglés -->
-        <div class="lang-content" data-lang="en">
-            <div class="max-w-3xl mx-auto space-y-6 py-16">
-                <h2 class="text-4xl font-extrabold text-center">Our Story: Making AI Accessible to Everyone</h2>
-                <p class="text-white/80 text-center">
-                    We focus on people, not just technology.<br/>
-                    “Why should only large companies benefit from these innovations?”
-                </p>
-                <p class="text-white/80">
-                    It was evident that there were no AI digital tools designed for the scale and budget
-                    of a small business. Seeing how the potential of AI remained out of reach for those who needed it most was a powerful motivation.
-                </p>
-                <p class="text-white/80">
-                    This is how AI Lab Mind was born. We democratize AI, creating effective, intuitive, and accessible tools
-                    for SMEs, regardless of their technological level.
-                </p>
-                <p class="text-white/80">
-                    We want every business to offer exceptional service, optimize operations and compete on equal terms
-                    in today's digital landscape.
-                </p>
-                <p class="text-white/80">
-                    We believe in the power of AI to drive your growth. We are here to fulfill that promise.
-                    Join us and discover how AI can transform your company.
-                </p>
-                <div class="bg-white/10 backdrop-blur-md rounded-lg p-6">
-                    <h3 class="text-2xl font-semibold mb-4">Key Benefits</h3>
-                    <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-white">
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Automated customer service that feels human
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Reduced operating costs without sacrificing quality
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Fast integration with WhatsApp, web, or phone
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Improved response times and satisfaction
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            No technical knowledge required
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
-                            Tools designed for SMEs
-                        </li>
-                    </ul>
-                </div>
-                <div class="text-center mt-4">
-                    <a href="#contact" class="btn-primary"
-                       data-es-href="#contact"
-                       data-en-href="#contact">Discover How It Can Work for You</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- SOLUCIONES / SOLUTIONS -->
-    <section id="solutions" class="page bg-gradient-to-b from-indigo-900 to-purple-900 text-white" style="background: linear-gradient(to bottom, rgba(88, 86, 236, 0.25), rgba(90, 200, 250, 0.25));">
-        <!-- Contenido en Español -->
-        <div class="lang-content active" data-lang="es">
-            <div class="max-w-6xl mx-auto px-4 space-y-12 py-16">
-                <div class="text-center space-y-4">
-                    <!-- Primer título: Nuestras Soluciones Claves -->
-                    <h2 class="text-3xl md:text-4xl font-extrabold">Nuestras Soluciones Claves</h2>
-                    <p class="text-gray-300">
-                        Descubre cómo nuestras soluciones inteligentes pueden transformar tu negocio.
-                        Desde soporte automatizado hasta optimización de procesos.
+    <p class="text-white/80">
+                        Era evidente que no existían herramientas digitales de IA pensadas para la escala y el presupuesto
+                        de un pequeño negocio. Ver cómo el potencial de la IA quedaba fuera del alcance de quienes más
+                        lo necesitaban fue una motivación poderosa.
                     </p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex flex-col agent-card">
-                        <i class="fas fa-headphones text-pink-400 text-4xl mb-4"></i>
-                        <h3 class="text-xl font-semibold mb-2 text-pink-400">Agentes de Voz</h3>
-                        <p class="flex-grow text-gray-200">
-                            Llamadas automatizadas, calificación de leads y agenda de citas 24/7.
-                        </p>
-                        <a href="#" target="_blank" class="mt-4 btn-primary bg-pink-500 hover:bg-pink-600"
-                           data-es-href="https://koalendar.com/e/ailabmind-es"
-                           data-en-href="https://koalendar.com/e/ailabmind-en">Saber Más</a>
-                    </div>
-                    <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex flex-col agent-card">
-                        <i class="fas fa-comments text-cyan-400 text-4xl mb-4"></i>
-                        <h3 class="text-xl font-semibold mb-2 text-cyan-400">Chatbots Inteligentes</h3>
-                        <p class="flex-grow text-gray-200">
-                            Soporte instantáneo, resolución de FAQ y guía fluida de usuarios en tu web.
-                        </p>
-                        <a href="#" target="_blank" class="mt-4 btn-primary bg-cyan-500 hover:bg-cyan-600"
-                           data-es-href="https://koalendar.com/e/ailabmind-es"
-                           data-en-href="https://koalendar.com/e/ailabmind-en">Saber Más</a>
-                    </div>
-                    <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex flex-col agent-card">
-                        <i class="fas fa-calendar-alt text-purple-400 text-4xl mb-4"></i>
-                        <h3 class="text-xl font-semibold mb-2 text-purple-400">Automatización de Citas</h3>
-                        <p class="flex-grow text-gray-200">
-                            Automatiza programación, seguimientos y confirmaciones directamente vía IA.
-                        </p>
-                        <a href="#" target="_blank" class="mt-4 btn-primary bg-purple-500 hover:bg-purple-600"
-                           data-es-href="https://koalendar.com/e/ailabmind-es"
-                           data-en-href="https://koalendar.com/e/ailabmind-en">Saber Más</a>
-                    </div>
-                </div>
-
-                <!-- Bloque de "Lo que podemos hacer por ti" con sus tarjetas (Reducción de Costos, etc.) -->
-                <div class="space-y-8">
-                    <div class="text-center space-y-2">
-                        <h2 class="text-3xl md:text-4xl font-bold text-cyan-400"
-                            data-es="Lo que podemos hacer por ti"
-                            data-en="What we can do for you">Lo que podemos hacer por ti</h2>
-                        <p class="text-gray-300"
-                           data-es="No estas gastando en moda, con nuestra IA generas mas con menos tiempo y dinero."
-                           data-en="You are not spending on fashion, with our AI you generate more with less time and money.">
-                           No estas gastando en moda, con nuestra IA generas mas con menos tiempo y dinero.
-                        </p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex items-start agent-card">
-                            <i class="fas fa-check text-green-400 text-2xl mr-4 mt-1"></i>
-                            <div>
-                                <h4 class="text-lg font-semibold">Reducción de Costos</h4>
-                                <p class="text-gray-200">
-                                    Automatiza tareas repetitivas y reduce la carga de trabajo de tu equipo de soporte.
-                                </p>
-                            </div>
-                        </div>
-                        <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex items-start agent-card">
-                            <i class="fas fa-clock text-white text-2xl mr-4 mt-1"></i>
-                            <div>
-                                <h4 class="text-lg font-semibold">Disponibilidad 24/7</h4>
-                                <p class="text-gray-200">
-                                    Tus clientes siempre tendrán soporte, sin importar la hora o el día.
-                                </p>
-                            </div>
-                        </div>
-                        <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex items-start agent-card">
-                            <i class="fas fa-star text-yellow-400 text-2xl mr-4 mt-1"></i>
-                            <div>
-                                <h4 class="text-lg font-semibold">Mejora la Satisfacción del Cliente</h4>
-                                <p class="text-gray-200">
-                                    Ofrece respuestas rápidas y precisas, mejorando la experiencia general del cliente.
-                                </p>
-                            </div>
-                        </div>
-                        <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex items-start agent-card">
-                            <i class="fas fa-rocket text-white text-2xl mr-4 mt-1"></i>
-                            <div>
-                                <h4 class="text-lg font-semibold">Escalabilidad y Crecimiento</h4>
-                                <p class="text-gray-200">
-                                    Maneja un volumen creciente de interacciones sin aumentar exponencialmente tu personal.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bloque de "Explora Todas nuestras Soluciones" con sus tarjetas y botones redirigidos al blog -->
-                <div class="text-center">
-                    <h2 class="text-3xl md:text-4xl font-extrabold text-white uppercase tracking-wider"
-                        data-es="Explora Todas nuestras Soluciones"
-                        data-en="Explore all our solutions">Explora Todas nuestras Soluciones</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
-                        <h3 class="text-lg font-semibold text-pink-400">Agentes de Voz Humanizados</h3>
-                        <p class="text-gray-200">
-                            Iris y Mike atienden llamadas, WhatsApps o chats con voz natural, cálida y profesional.
-                        </p>
-                        <!-- CORREGIDO: Ahora redirige a LinkedIn -->
-                        <a href="https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true" target="_blank" class="inline-block bg-pink-500 text-white text-xs px-2 py-1 rounded mt-4" data-es="Atención 24/7" data-en="24/7 Support">Atención 24/7</a>
-                    </div>
-                    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
-                        <h3 class="text-lg font-semibold text-cyan-400">Sistema Inteligente para Agendar Citas</h3>
-                        <p class="text-2xl text-gray-200">
-                            Tu agente califica al lead y agenda automáticamente en tu calendario. Sin fricción.
-                        </p>
-                        <!-- CORREGIDO: Ahora redirige a LinkedIn -->
-                        <a href="https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true" target="_blank" class="inline-block bg-cyan-500 text-white text-xs px-2 py-1 rounded mt-4" data-es="Más leads convertidos" data-en="More converted leads">Más leads convertidos</a>
-                    </div>
-                    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
-                        <h3 class="text-lg font-semibold text-purple-400">Análisis de Llamadas + Propuesta</h3>
-                        <p class="text-gray-200">
-                            Escuchamos tus llamadas y generamos una propuesta automática lista para enviar.
-                        </p>
-                        <!-- CORREGIDO: Ahora redirige a LinkedIn -->
-                        <a href="https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true" target="_blank" class="inline-block bg-purple-500 text-white text-xs px-2 py-1 rounded mt-4" data-es="Ahorra horas de seguimiento" data-en="Save hours of follow-up">Ahorra horas de seguimiento</a>
-                    </div>
-                    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
-                        <h3 class="text-lg font-semibold text-yellow-400">Modular Automations</h3>
-                        <p class="text-gray-200">
-                            Conecta WhatsApp, tu sitio web, CRM y más con plantillas listas para usar.
-                        </p>
-                        <!-- CORREGIDO: Ahora redirige a LinkedIn -->
-                        <a href="https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true" target="_blank" class="inline-block bg-yellow-500 text-white text-xs px-2 py-1 rounded mt-4" data-es="Sin programar" data-en="No coding needed">Sin programar</a>
-                    </div>
-                    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
-                        <h3 class="text-lg font-semibold text-green-400">Reportes Inteligentes de Cliente</h3>
-                        <p class="text-gray-200">
-                            Detectamos objeciones, emociones y temas frecuentes. Tú solo decides.
-                        </p>
-                        <!-- CORREGIDO: Ahora redirige a LinkedIn -->
-                        <a href="https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true" target="_blank" class="inline-block bg-green-500 text-white text-xs px-2 py-1 rounded mt-4" data-es="Datos accionables" data-en="Actionable data">Datos accionables</a>
-                    </div>
-                    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
-                        <h3 class="text-lg font-semibold text-teal-400">Asesoría Estratégica para PYMES</h3>
-                        <p class="text-gray-200">
-                            Te ayudamos a decidir qué automatizar, cómo y cuándo. Sin desperdiciar dinero.
-                        </p>
-                        <!-- CORREGIDO: Ahora redirige a LinkedIn -->
-                        <a href="https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true" target="_blank" class="inline-block bg-teal-500 text-white text-xs px-2 py-1 rounded mt-4" data-es="Solo lo que necesitas" data-en="Only what you need">Solo lo que necesitas</a>
-                    </div>
-                </div>
-            </div>
-        </div >
+    <p class="text-white/80">
+                        Así nació AI Lab Mind. Democratizamos la IA, creando herramientas efectivas, intuitivas y accesibles
+                        para PYMES, sin importar su nivel tecnológico.
+                    </p>
+    <p class="text-white/80">
+                        Queremos que cada negocio ofrezca atención excepcional, optimice operaciones y compita en igualdad
+                        de condiciones en el panorama digital actual.
+                    </p>
+    <p class="text-white/80">
+                        Creemos en el poder de la IA para impulsar tu crecimiento. Estamos aquí para cumplir esa promesa.
+                        Únete y descubre cómo la IA puede transformar tu empresa.
+                    </p>
+    <div class="bg-white/10 backdrop-blur-md rounded-lg p-6">
+    <h3 class="text-2xl font-semibold mb-4">Beneficios Clave</h3>
+    <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-white">
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Atención al cliente automatizada que parece humana
+                            </li>
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Reducción de costos operativos sin perder calidad
+                            </li>
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Integración rápida con WhatsApp, web o teléfono
+                            </li>
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Mejora en tiempos de respuesta y satisfacción
+                            </li>
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Sin necesidad de conocimientos técnicos
+                            </li>
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Herramientas diseñadas para PYMES
+                            </li>
+    </ul>
+    </div>
+    <div class="text-center mt-4">
+    <a class="btn-primary" data-en-href="#contact" data-es-href="#contact" href="#contact">Descubre Cómo Puede Funcionar para Ti</a>
+    </div>
+    </div>
+    </div>
+    <div class="lang-content" data-lang="en">
+    <div class="max-w-3xl mx-auto space-y-6 py-16">
+    <h2 class="text-4xl font-extrabold text-center">Our Story: Making AI Accessible to Everyone</h2>
+    <p class="text-white/80 text-center">
+                        We focus on people, not just technology.<br/>
+                        “Why should only large companies benefit from these innovations?”
+                    </p>
+    <p class="text-white/80">
+                        It was evident that there were no AI digital tools designed for the scale and budget
+                        of a small business. Seeing how the potential of AI remained out of reach for those who needed it most was a powerful motivation.
+                    </p>
+    <p class="text-white/80">
+                        This is how AI Lab Mind was born. We democratize AI, creating effective, intuitive, and accessible tools
+                        for SMEs, regardless of their technological level.
+                    </p>
+    <p class="text-white/80">
+                        We want every business to offer exceptional service, optimize operations and compete on equal terms
+                        in today's digital landscape.
+                    </p>
+    <p class="text-white/80">
+                        We believe in the power of AI to drive your growth. We are here to fulfill that promise.
+                        Join us and discover how AI can transform your company.
+                    </p>
+    <div class="bg-white/10 backdrop-blur-md rounded-lg p-6">
+    <h3 class="text-2xl font-semibold mb-4">Key Benefits</h3>
+    <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-white">
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Automated customer service that feels human
+                            </li>
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Reduced operating costs without sacrificing quality
+                            </li>
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Fast integration with WhatsApp, web or phone
+                            </li>
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Improved response times and satisfaction
+                            </li>
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                No technical knowledge required
+                            </li>
+    <li class="flex items-start">
+    <i class="fas fa-check text-green-400 mr-3 mt-1"></i>
+                                Tools designed for SMEs
+                            </li>
+    </ul>
+    </div>
+    <div class="text-center mt-4">
+    <a class="btn-primary" data-en-href="#contact" data-es-href="#contact" href="#contact">Discover How It Can Work for You</a>
+    </div>
+    </div>
+    </div>
     </section>
-
-    <!-- BLOG -->
-    <section id="blog" class="page">
-        <!-- Contenido en Español -->
-        <div class="lang-content active" data-lang="es">
-            <section class="py-16 text-white">
-                <div class="container mx-auto px-4 text-center">
-                    <h2 class="text-4xl font-bold mb-8">Blog</h2>
-
-                    <!-- Sección de Destacados por Categoría -->
-                    <h3 class="text-3xl font-semibold mb-6 text-left">Destacados por Categoría</h3>
-                    <div id="featured-posts-es" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                        <!-- Posts destacados se cargarán aquí con JavaScript -->
-                    </div>
-
-                    <!-- Botones de Filtro por Categoría -->
-                    <div class="flex flex-wrap justify-center gap-4 mb-8">
-                        <button class="filter-btn btn-primary bg-gray-700 hover:bg-gray-600" data-filter="all" data-es="Ver Todos">Ver Todos</button>
-                        <button class="filter-btn btn-primary bg-indigo-600 hover:bg-indigo-500" data-filter="automation" data-es="Automatización">Automatización</button>
-                        <button class="filter-btn btn-primary bg-purple-600 hover:bg-purple-500" data-filter="strategy" data-es="Estrategia">Estrategia</button>
-                        <button class="filter-btn btn-primary bg-red-600 hover:bg-red-500" data-filter="common-errors" data-es="Errores Comunes">Errores Comunes</button>
-                    </div>
-
-                    <!-- Todos los Artículos -->
-                    <h3 class="text-3xl font-semibold mb-6 text-left">Todos los Artículos</h3>
-                    <div id="all-posts-es" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <!-- Todos los posts se cargarán aquí con JavaScript -->
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- Contenido en Inglés -->
-        <div class="lang-content" data-lang="en">
-            <section class="py-16 px-4 sm:px-6 lg:px-8 text-white">
-                <div class="max-w-7xl mx-auto">
-                    <h2 class="text-3xl font-bold mb-8">Blog</h2>
-
-                    <!-- Featured by Category Section -->
-                    <h3 class="text-3xl font-semibold mb-6 text-left">Featured by Category</h3>
-                    <div id="featured-posts-en" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                        <!-- Featured posts will be loaded here by JavaScript -->
-                    </div>
-
-                    <!-- Category Filter Buttons -->
-                    <div class="flex flex-wrap justify-center gap-4 mb-8">
-                        <button class="filter-btn btn-primary bg-gray-700 hover:bg-gray-600" data-filter="all" data-en="View All">View All</button>
-                        <button class="filter-btn btn-primary bg-indigo-600 hover:bg-indigo-500" data-filter="automation" data-en="Automation">Automation</button>
-                        <button class="filter-btn btn-primary bg-purple-600 hover:bg-purple-500" data-filter="strategy" data-en="Strategy">Strategy</button>
-                        <button class="filter-btn btn-primary bg-red-600 hover:bg-red-500" data-filter="common-errors" data-en="Common Errors">Common Errors</button>
-                    </div>
-
-                    <!-- All Articles -->
-                    <h3 class="text-3xl font-semibold mb-6 text-left">All Articles</h3>
-                    <div id="all-posts-en" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <!-- All posts will be loaded here by JavaScript -->
-                    </div>
-                </div>
-            </section>
-        </div>
+    <section class="page" id="solutions">
+    <div class="lang-content active" data-lang="es">
+    <div class="max-w-6xl mx-auto px-4 space-y-12 py-16">
+    <div class="text-center space-y-4">
+    <h2 class="text-3xl md:text-4xl font-extrabold">Nuestras Soluciones Claves</h2>
+    <p class="text-gray-300">
+                            Descubre cómo nuestras soluciones inteligentes pueden transformar tu negocio.
+                            Desde soporte automatizado hasta optimización de procesos.
+                        </p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex flex-col agent-card">
+    <i class="fas fa-headphones text-pink-400 text-4xl mb-4"></i>
+    <h3 class="text-xl font-semibold mb-2 text-pink-400">Agentes de Voz</h3>
+    <p class="flex-grow text-gray-200">
+                                Llamadas automatizadas, calificación de leads y agenda de citas 24/7.
+                            </p>
+    <a class="mt-4 btn-primary bg-pink-500 hover:bg-pink-600" data-en-href="https://koalendar.com/e/ailabmind-en" data-es-href="https://koalendar.com/e/ailabmind-es" href="#" target="_blank">Saber Más</a>
+    </div>
+    <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex flex-col agent-card">
+    <i class="fas fa-comments text-cyan-400 text-4xl mb-4"></i>
+    <h3 class="text-xl font-semibold mb-2 text-cyan-400">Chatbots Inteligentes</h3>
+    <p class="flex-grow text-gray-200">
+                                Soporte instantáneo, resolución de FAQ y guía fluida de usuarios en tu web.
+                            </p>
+    <a class="mt-4 btn-primary bg-cyan-500 hover:bg-cyan-600" data-en-href="https://koalendar.com/e/ailabmind-en" data-es-href="https://koalendar.com/e/ailabmind-es" href="#" target="_blank">Saber Más</a>
+    </div>
+    <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex flex-col agent-card">
+    <i class="fas fa-calendar-alt text-purple-400 text-4xl mb-4"></i>
+    <h3 class="text-xl font-semibold mb-2 text-purple-400">Automatización de Citas</h3>
+    <p class="flex-grow text-gray-200">
+                                Automatiza programación, seguimientos y confirmaciones directamente vía IA.
+                            </p>
+    <a class="mt-4 btn-primary bg-purple-500 hover:bg-purple-600" data-en-href="https://koalendar.com/e/ailabmind-en" data-es-href="https://koalendar.com/e/ailabmind-es" href="#" target="_blank">Saber Más</a>
+    </div>
+    </div>
+    <div class="space-y-8">
+    <div class="text-center space-y-2">
+    <h2 class="text-3xl md:text-4xl font-bold text-cyan-400" data-en="What we can do for you" data-es="Lo que podemos hacer por ti">Lo que podemos hacer por ti</h2>
+    <p class="text-gray-300" data-en="You are not spending on fashion, with our AI you generate more with less time and money." data-es="No estas gastando en moda, con nuestra IA generas mas con menos tiempo y dinero.">
+                               No estas gastando en moda, con nuestra IA generas mas con menos tiempo y dinero.
+                            </p>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex items-start agent-card">
+    <i class="fas fa-check text-green-400 text-2xl mr-4 mt-1"></i>
+    <div>
+    <h4 class="text-lg font-semibold">Reducción de Costos</h4>
+    <p class="text-gray-200">
+                                        Automatiza tareas repetitivas y reduce la carga de trabajo de tu equipo de soporte.
+                                    </p>
+    </div>
+    </div>
+    <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex items-start agent-card">
+    <i class="fas fa-clock text-white text-2xl mr-4 mt-1"></i>
+    <div>
+    <h4 class="text-lg font-semibold">Disponibilidad 24/7</h4>
+    <p class="text-gray-200">
+                                        Tus clientes siempre tendrán soporte, sin importar la hora o el día.
+                                    </p>
+    </div>
+    </div>
+    <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex items-start agent-card">
+    <i class="fas fa-star text-yellow-400 text-2xl mr-4 mt-1"></i>
+    <div>
+    <h4 class="text-lg font-semibold">Mejora la Satisfacción del Cliente</h4>
+    <p class="text-gray-200">
+                                        Ofrece respuestas rápidas y precisas, mejorando la experiencia general del cliente.
+                                    </p>
+    </div>
+    </div>
+    <div class="bg-black/50 border border-white/20 rounded-lg p-6 flex items-start agent-card">
+    <i class="fas fa-rocket text-white text-2xl mr-4 mt-1"></i>
+    <div>
+    <h4 class="text-lg font-semibold">Escalabilidad y Crecimiento</h4>
+    <p class="text-gray-200">
+                                        Maneja un volumen creciente de interacciones sin aumentar exponencialmente tu personal.
+                                    </p>
+    </div>
+    </div>
+    </div>
+    </div>
+    <div class="text-center">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-white uppercase tracking-wider" data-en="Explore all our solutions" data-es="Explora Todas nuestras Soluciones">Explora Todas nuestras Soluciones</h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
+    <h3 class="text-lg font-semibold text-pink-400">Agentes de Voz Humanizados</h3>
+    <p class="text-gray-200">
+                                Iris y Mike atienden llamadas, WhatsApps o chats con voz natural, cálida y profesional.
+                            </p>
+    <a class="inline-block bg-pink-500 text-white text-xs px-2 py-1 rounded mt-4" data-key="24-7-support" href="#" target="_blank" data-es-href="https://ailabmind1.systeme.io/fc2debf7" data-en-href="https://ailabmind1.systeme.io/posts">Atención 24/7</a>
+    </div>
+    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
+    <h3 class="text-lg font-semibold text-cyan-400">Sistema Inteligente para Agendar Citas</h3>
+    <p class="text-2xl text-gray-200">
+                                Tu agente califica al lead y agenda automáticamente en tu calendario. Sin fricción.
+                            </p>
+    <a class="inline-block bg-cyan-500 text-white text-xs px-2 py-1 rounded mt-4" data-key="more-converted-leads" href="#" target="_blank" data-es-href="https://ailabmind1.systeme.io/fc2debf7" data-en-href="https://ailabmind1.systeme.io/posts">Más leads convertidos</a>
+    </div>
+    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
+    <h3 class="text-lg font-semibold text-purple-400">Análisis de Llamadas + Propuesta</h3>
+    <p class="text-gray-200">
+                                Escuchamos tus llamadas y generamos una propuesta automática lista para enviar.
+                            </p>
+    <a class="inline-block bg-purple-500 text-white text-xs px-2 py-1 rounded mt-4" data-key="save-hours-follow-up" href="#" target="_blank" data-es-href="https://ailabmind1.systeme.io/fc2debf7" data-en-href="https://ailabmind1.systeme.io/posts">Ahorra horas de seguimiento</a>
+    </div>
+    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
+    <h3 class="text-lg font-semibold text-yellow-400">Modular Automations</h3>
+    <p class="text-gray-200">
+                                Conecta WhatsApp, tu sitio web, CRM y más con plantillas listas para usar.
+                            </p>
+    <a class="inline-block bg-yellow-500 text-white text-xs px-2 py-1 rounded mt-4" data-key="no-coding-needed" href="#" target="_blank" data-es-href="https://ailabmind1.systeme.io/fc2debf7" data-en-href="https://ailabmind1.systeme.io/posts">Sin programar</a>
+    </div>
+    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
+    <h3 class="text-lg font-semibold text-green-400">Reportes Inteligentes de Cliente</h3>
+    <p class="text-gray-200">
+                                Detectamos objeciones, emociones y temas frecuentes. Tú solo decides.
+                            </p>
+    <a class="inline-block bg-green-500 text-white text-xs px-2 py-1 rounded mt-4" data-key="actionable-data" href="#" target="_blank" data-es-href="https://ailabmind1.systeme.io/fc2debf7" data-en-href="https://ailabmind1.systeme.io/posts">Datos accionables</a>
+    </div>
+    <div class="bg-black/30 backdrop-blur-sm p-6 rounded-lg agent-card">
+    <h3 class="text-lg font-semibold text-teal-400">Asesoría Estratégica para PYMES</h3>
+    <p class="text-gray-200">
+                                Te ayudamos a decidir qué automatizar, cómo y cuándo. Sin desperdiciar dinero.
+                            </p>
+    <a class="inline-block bg-teal-500 text-white text-xs px-2 py-1 rounded mt-4" data-key="only-what-you-need" href="#" target="_blank" data-es-href="https://ailabmind1.systeme.io/fc2debf7" data-en-href="https://ailabmind1.systeme.io/posts">Solo lo que necesitas</a>
+    </div>
+    </div>
+    </div>
+    </div>
     </section>
-
-    <!-- CONTACTO / CONTACT US -->
-    <section id="contact" class="page">
-        <!-- Contenido en Español -->
-        <div class="lang-content active" data-lang="es">
-            <section class="px-4 max-w-5xl mx-auto text-white">
-                <h2 class="text-3xl font-semibold text-center mb-6 py-16">Contáctanos</h2>
-                <p class="text-center mb-10">¿Tienes preguntas o quieres una demo? Estamos aquí para ayudarte.</p>
-                <!-- Botón Agendar una demo movido y con glow -->
-                <div class="text-center mb-8">
-                    <a href="#" target="_blank" class="btn-outline glow-cyan"
-                       data-es-href="https://koalendar.com/e/ailabmind-es"
-                       data-en-href="https://koalendar.com/e/ailabmind-en">Agendar una demo</a>
-                </div>
-                <form class="bg-white bg-opacity-5 p-8 rounded-2xl shadow-2xl max-w-2xl mx-auto backdrop-blur-md">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block mb-2 text-sm">Nombre</label>
-                            <input type="text" placeholder="Tu nombre" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 text-white placeholder-white/70 outline-none"/>
-                        </div>
-                        <div>
-                            <label class="block mb-2 text-sm">Correo electrónico</label>
-                            <input type="email" placeholder="tucorreo@ejemplo.com" class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 text-white placeholder-white/70 outline-none"/>
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block mb-2 text-sm">Mensaje</label>
-                            <textarea rows="5" placeholder="Cuéntanos en qué te podemos ayudar..." class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 text-white placeholder-white/70 outline-none"></textarea>
-                        </div>
-                    </div>
-                    <div class="text-center mt-6">
-                        <button type="submit" class="px-6 py-3 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition shadow-md">
-                            Enviar mensaje
-                        </button>
-                    </div>
-                </form>
-                <div class="mt-8 text-center">
-                    <p>Email: <a href="mailto:info@ailabmind.com" class="underline text-purple-200 hover:text-white">info@ailabmind.com</a></p>
-                </div>
-            </section>
-        </div>
-
-        <!-- Contenido en Inglés -->
-        <div class="lang-content" data-lang="en">
-            <section class="px-4 sm:px-8 md:px-16 relative z-10">
-                <h2 class="text-4xl font-bold mb-4 py-16 text-center">Contact Us</h2>
-                <p class="text-lg mb-8 text-center">Let’s talk about how we can transform your business with AI. We’d love to hear from you.</p>
-                <!-- Botón Schedule a Demo movido y con glow -->
-                <div class="text-center mb-8">
-                    <a href="#" target="_blank" class="btn-outline glow-cyan"
-                       data-es-href="https://koalendar.com/e/ailabmind-es"
-                       data-en-href="https://koalendar.com/e/ailabmind-en">Schedule a Demo</a>
-                </div>
-                <form class="bg-white bg-opacity-5 backdrop-blur-md p-8 rounded-2xl shadow-lg max-w-2xl mx-auto space-y-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <input type="text" placeholder="First Name" class="w-full p-3 rounded-lg bg-white bg-opacity-10 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-purple-500"/>
-                        <input type="text" placeholder="Last Name" class="w-full p-3 rounded-lg bg-white bg-opacity-10 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-purple-500"/>
-                    </div>
-                    <input type="email" placeholder="Email Address" class="w-full p-3 rounded-lg bg-white bg-opacity-10 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-purple-500"/>
-                    <textarea placeholder="Your Message" class="w-full p-3 rounded-lg bg-white bg-opacity-10 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
-                    <div class="text-center mt-6">
-                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Send Message</button>
-                    </div>
-                </form>
-
-                <div class="mt-12 text-sm opacity-75 text-center">
-                    <p>Email: <a href="mailto:info@ailabmind.com" class="underline text-purple-200 hover:text-white">info@ailabmind.com</a></p>
-                </div>
-            </section>
-        </div>
+    <section class="page" id="blog">
+    <div class="lang-content active" data-lang="es">
+    <section class="py-16 text-white">
+    <div class="container mx-auto px-4 text-center">
+    <h2 class="text-4xl font-bold mb-8">Blog</h2>
+    <h3 class="text-3xl font-semibold mb-6 text-left">Destacados por Categoría</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12" id="featured-posts-es">
+    </div>
+    <div class="flex flex-wrap justify-center gap-4 mb-8">
+    <button class="filter-btn btn-primary bg-gray-700 hover:bg-gray-600" data-es="Ver Todos" data-filter="all">Ver Todos</button>
+    <button class="filter-btn btn-primary bg-indigo-600 hover:bg-indigo-500" data-es="Automatización" data-filter="automation">Automatización</button>
+    <button class="filter-btn btn-primary bg-purple-600 hover:bg-purple-500" data-es="Estrategia" data-filter="strategy">Estrategia</button>
+    <button class="filter-btn btn-primary bg-red-600 hover:bg-red-500" data-es="Errores Comunes" data-filter="common-errors">Errores Comunes</button>
+    </div>
+    <h3 class="text-3xl font-semibold mb-6 text-left">Todos los Artículos</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="all-posts-es">
+    </div>
+    </div>
     </section>
-
-    <!-- FAQ -->
-    <section id="faq" class="page">
-        <!-- Contenido en Español -->
-        <div class="lang-content active" data-lang="es">
-            <section class="py-16 px-4 sm:px-6 lg:px-8 text-white">
-                <div class="max-w-4xl mx-auto">
-                    <h2 class="text-3xl font-bold mb-8 text-center">Preguntas Frecuentes (FAQ)</h2>
-                    <div class="space-y-4">
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">¿Qué es exactamente la Inteligencia Artificial (IA) para mi negocio?</summary>
-                            <p class="mt-2 text-sm">Es la capacidad de un sistema para aprender de tus clientes y responder como un humano, automatizando tareas, conversaciones y decisiones.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">¿Cómo me ayuda la IA a retener más clientes?</summary>
-                            <p class="mt-2 text-sm">Te ayuda a responder más rápido, resolver dudas 24/7, detectar quejas a tiempo y mantener conversaciones relevantes en cada etapa.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">¿Cómo puede la IA automatizar mi servicio al cliente?</summary>
-                            <p class="mt-2 text-sm">A través de agentes de voz o chatbots que entienden preguntas comunes, agendan citas, califican leads y responden en tiempo real como un humano.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">¿Qué diferencia a AI Lab Mind de otras empresas?</summary>
-                            <p class="mt-2 text-sm">Nos enfocamos en pequeños negocios. No necesitas conocimientos técnicos. Automatizamos solo lo necesario, siempre contigo en el centro.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">¿La IA es costosa?</summary>
-                            <p class="mt-2 text-sm">No. Usamos herramientas accesibles y modulares que se ajustan a tu presupuesto. Pagarás solo por lo que realmente necesitas.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">¿Cuando veré resultados?</summary>
-                            <p class="mt-2 text-sm">Sentirás el alivio operativo desde el primer día. En pocas semanas, verás mejoras medibles en velocidad, experiencia y conversión.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">¿Cómo puedo empezar con AI Lab Mind?</summary>
-                            <p class="mt-2 text-sm">Solo agenda una demo. Te mostraremos ejemplos reales y diseñaremos juntos la mejor solución.</p>
-                        </details>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- Contenido en Inglés -->
-        <div class="lang-content" data-lang="en">
-            <section class="py-16 px-4 sm:px-6 lg:px-8 text-white">
-                <div class="max-w-4xl mx-auto">
-                    <h2 class="text-3xl font-bold mb-8 text-center">Frequently Asked Questions (FAQ)</h2>
-                    <div class="space-y-4">
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">What exactly is Artificial Intelligence (AI) for my business?</summary>
-                            <p class="mt-2 text-sm">It’s the ability of a system to learn from your customers and respond like a human, automating tasks, conversations, and decisions.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">How does AI help me retain more clients?</summary>
-                            <p class="mt-2 text-sm">It helps you respond faster, solve questions 24/7, detect complaints early, and maintain relevant conversations through every stage.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">How can AI automate my customer service?</summary>
-                            <p class="mt-2 text-sm">Through voice agents or chatbots that understand common questions, schedule appointments, qualify leads, and respond in real time like a human.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">What makes AI Lab Mind different from other companies?</summary>
-                            <p class="mt-2 text-sm">We focus on small businesses. No tech knowledge required. We automate only what’s needed, always with you at the center.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">Is AI expensive?</summary>
-                            <p class="mt-2 text-sm">No. We use accessible, modular tools that fit your budget. You’ll pay only for what you truly need.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">When will I see results?</summary>
-                            <p class="mt-2 text-sm">You’ll feel the operational relief from day one. In just a few weeks, you’ll see measurable improvements in speed, experience, and conversion.</p>
-                        </details>
-                        <details class="bg-white/10 p-4 rounded-lg shadow">
-                            <summary class="font-semibold cursor-pointer">How do I get started with AI Lab Mind?</summary>
-                            <p class="mt-2 text-sm">Just schedule a demo. We’ll show you real examples and design the best solution together.</p>
-                        </details>
-                    </div>
-                </div>
-            </section>
-        </div>
+    </div>
+    <div class="lang-content" data-lang="en">
+    <section class="py-16 px-4 sm:px-6 lg:px-8 text-white">
+    <div class="max-w-7xl mx-auto">
+    <h2 class="text-3xl font-bold mb-8">Blog</h2>
+    <h3 class="text-3xl font-semibold mb-6 text-left">Featured by Category</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12" id="featured-posts-en">
+    </div>
+    <div class="flex flex-wrap justify-center gap-4 mb-8">
+    <button class="filter-btn btn-primary bg-gray-700 hover:bg-gray-600" data-en="View All" data-filter="all">View All</button>
+    <button class="filter-btn btn-primary bg-indigo-600 hover:bg-indigo-500" data-en="Automation" data-filter="automation">Automation</button>
+    <button class="filter-btn btn-primary bg-purple-600 hover:bg-purple-500" data-en="Strategy" data-filter="strategy">Strategy</button>
+    <button class="filter-btn btn-primary bg-red-600 hover:bg-red-500" data-en="Common Errors" data-filter="common-errors">Common Errors</button>
+    </div>
+    <h3 class="text-3xl font-semibold mb-6 text-left">All Articles</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="all-posts-en">
+    </div>
+    </div>
     </section>
-  </main>
-
-  <!-- Footer -->
-  <footer>
+    </div>
+    </section>
+    <section class="page" id="contact">
+    <div class="lang-content active" data-lang="es">
+    <section class="px-4 max-w-5xl mx-auto text-white">
+    <h2 class="text-3xl font-semibold text-center mb-6 py-16">Contáctanos</h2>
+    <p class="text-center mb-10">¿Tienes preguntas o quieres una demo? Estamos aquí para ayudarte.</p>
+    <div class="text-center mb-8">
+    <a class="btn-outline glow-cyan" data-en-href="https://koalendar.com/e/ailabmind-en" data-es-href="https://koalendar.com/e/ailabmind-es" href="#" target="_blank">Agendar una demo</a>
+    </div>
+    <form class="bg-white bg-opacity-5 p-8 rounded-2xl shadow-2xl max-w-2xl mx-auto backdrop-blur-md">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+    <label class="block mb-2 text-sm">Nombre</label>
+    <input class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 text-white placeholder-white/70 outline-none" placeholder="Tu nombre" type="text"/>
+    </div>
+    <div>
+    <label class="block mb-2 text-sm">Correo electrónico</label>
+    <input class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 text-white placeholder-white/70 outline-none" placeholder="tucorreo@ejemplo.com" type="email"/>
+    </div>
+    <div class="md:col-span-2">
+    <label class="block mb-2 text-sm">Mensaje</label>
+    <textarea class="w-full px-4 py-2 rounded-lg bg-white bg-opacity-10 text-white placeholder-white/70 outline-none" placeholder="Cuéntanos en qué te podemos ayudar..." rows="5"></textarea>
+    </div>
+    </div>
+    <div class="text-center mt-6">
+    <button class="px-6 py-3 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition shadow-md" type="submit">
+                                Enviar mensaje
+                            </button>
+    </div>
+    </form>
+    <div class="mt-8 text-center">
+    <p>Email: <a class="underline text-purple-200 hover:text-white" href="mailto:info@ailabmind.com">info@ailabmind.com</a></p>
+    </div>
+    </section>
+    </div>
+    <div class="lang-content" data-lang="en">
+    <section class="px-4 sm:px-8 md:px-16 relative z-10">
+    <h2 class="text-4xl font-bold mb-4 py-16 text-center">Contact Us</h2>
+    <p class="text-lg mb-8 text-center">Let’s talk about how we can transform your business with AI. We’d love to hear from you.</p>
+    <div class="text-center mb-8">
+    <a class="btn-outline glow-cyan" data-en-href="https://koalendar.com/e/ailabmind-en" data-es-href="https://koalendar.com/e/ailabmind-es" href="#" target="_blank">Schedule a Demo</a>
+    </div>
+    <form class="bg-white bg-opacity-5 backdrop-blur-md p-8 rounded-2xl shadow-lg max-w-2xl mx-auto space-y-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <input class="w-full p-3 rounded-lg bg-white bg-opacity-10 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="First Name" type="text"/>
+    <input class="w-full p-3 rounded-lg bg-white bg-opacity-10 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Last Name" type="text"/>
+    </div>
+    <input class="w-full p-3 rounded-lg bg-white bg-opacity-10 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Email Address" type="email"/>
+    <textarea class="w-full p-3 rounded-lg bg-white bg-opacity-10 text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Your Message"></textarea>
+    <div class="text-center mt-6">
+    <button class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300" type="submit">Send Message</button>
+    </div>
+    </form>
+    <div class="mt-12 text-sm opacity-75 text-center">
+    <p>Email: <a class="underline text-purple-200 hover:text-white" href="mailto:info@ailabmind.com">info@ailabmind.com</a></p>
+    </div>
+    </section>
+    </div>
+    </section>
+    <section class="page" id="faq">
+    <div class="lang-content active" data-lang="es">
+    <section class="py-16 px-4 sm:px-6 lg:px-8 text-white">
+    <div class="max-w-4xl mx-auto">
+    <h2 class="text-3xl font-bold mb-8 text-center">Preguntas Frecuentes (FAQ)</h2>
+    <div class="space-y-4">
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">¿Qué es exactamente la Inteligencia Artificial (IA) para mi negocio?</summary>
+    <p class="mt-2 text-sm">Es la capacidad de un sistema para aprender de tus clientes y responder como un humano, automatizando tareas, conversaciones y decisiones.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">¿Cómo me ayuda la IA a retener más clientes?</summary>
+    <p class="mt-2 text-sm">Te ayuda a responder más rápido, resolver dudas 24/7, detectar quejas a tiempo y mantener conversaciones relevantes en cada etapa.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">¿Cómo puede la IA automatizar mi servicio al cliente?</summary>
+    <p class="mt-2 text-sm">A través de agentes de voz o chatbots que entienden preguntas comunes, agendan citas, califican leads y responden en tiempo real como un humano.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">¿Qué diferencia a AI Lab Mind de otras empresas?</summary>
+    <p class="mt-2 text-sm">Nos enfocamos en pequeños negocios. No necesitas conocimientos técnicos. Automatizamos solo lo necesario, siempre contigo en el centro.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">¿La IA es costosa?</summary>
+    <p class="mt-2 text-sm">No. Usamos herramientas accesibles y modulares que se ajustan a tu presupuesto. Pagarás solo por lo que realmente necesitas.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">¿Cuando veré resultados?</summary>
+    <p class="mt-2 text-sm">Sentirás el alivio operativo desde el primer día. En pocas semanas, verás mejoras medibles en velocidad, experiencia y conversión.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">¿Cómo puedo empezar con AI Lab Mind?</summary>
+    <p class="mt-2 text-sm">Solo agenda una demo. Te mostraremos ejemplos reales y diseñaremos juntos la mejor solución.</p>
+    </details>
+    </div>
+    </div>
+    </section>
+    </div>
+    <div class="lang-content" data-lang="en">
+    <section class="py-16 px-4 sm:px-6 lg:px-8 text-white">
+    <div class="max-w-4xl mx-auto">
+    <h2 class="text-3xl font-bold mb-8 text-center">Frequently Asked Questions (FAQ)</h2>
+    <div class="space-y-4">
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">What exactly is Artificial Intelligence (AI) for my business?</summary>
+    <p class="mt-2 text-sm">It’s the ability of a system to learn from your customers and respond like a human, automating tasks, conversations, and decisions.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">How does AI help me retain more clients?</summary>
+    <p class="mt-2 text-sm">It helps you respond faster, solve questions 24/7, detect complaints early, and maintain relevant conversations through every stage.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">How can AI automate my customer service?</summary>
+    <p class="mt-2 text-sm">A through voice agents or chatbots that understand common questions, schedule appointments, qualify leads, and respond in real time like a human.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">What makes AI Lab Mind different from other companies?</summary>
+    <p class="mt-2 text-sm">We focus on small businesses. No tech knowledge required. We automate only what’s needed, always with you at the center.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">Is AI expensive?</summary>
+    <p class="mt-2 text-sm">No. We use accessible, modular tools that fit your budget. You’ll pay only for what you truly need.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">When will I see results?</summary>
+    <p class="mt-2 text-sm">You’ll feel the operational relief from day one. In just a few weeks, you’ll see measurable improvements in speed, experience and conversion.</p>
+    </details>
+    <details class="bg-white/10 p-4 rounded-lg shadow">
+    <summary class="font-semibold cursor-pointer">How do I get started with AI Lab Mind?</summary>
+    <p class="mt-2 text-sm">Just schedule a demo. We’ll show you real examples and design the best solution together.</p>
+    </details>
+    </div>
+    </div>
+    </section>
+    </div>
+    </section>
+</main>
+<footer>
     <div class="container mx-auto grid md:grid-cols-4 gap-8 px-4">
-      <div>
-        <h3 class="text-white font-semibold mb-2" data-es="AI Lab Mind" data-en="AI Lab Mind">AI Lab Mind</h3>
-        <!-- Línea de dirección eliminada -->
-        <p data-es="Email: info@ailabmind.com" data-en="Email: info@ailabmind.com">Email: info@ailabmind.com</p>
-      </div>
-      <div>
-        <h3 class="text-white font-semibold mb-2" data-es="Enlaces Rápidos" data-en="Quick Links">Enlaces Rápidos</h3>
-        <ul class="space-y-2">
-          <li><a href="#home" data-es="Inicio" data-en="Home">Inicio</a></li>
-          <li><a href="#focus" data-es="Enfoque" data-en="Our Approach">Enfoque</a></li>
-          <li><a href="#solutions" data-es="Soluciones" data-en="Solutions">Soluciones</a></li>
-          <!-- Enlace del Blog en Footer también a LinkedIn -->
-          <li><a href="https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true" target="_blank" data-es="Blog" data-en="Blog">Blog</a></li>
-          <li><a href="#contact" data-es="Contáctanos" data-en="Contact Us">Contáctanos</a></li>
-          <li><a href="#faq" data-es="FAQ" data-en="FAQ">FAQ</a></li>
-        </ul>
-      </div>
-      <div>
-        <h3 class="text-white font-semibold mb-2" data-es="Síguenos" data-en="Follow Us">Síguenos</h3>
-        <ul class="space-y-2">
-          <li><a href="https://linkedin.com/company/105943016" data-es="LinkedIn" data-en="LinkedIn">LinkedIn</a></li>
-          <li><a href="https://tiktok.com/@ailabmind" data-es="TikTok" data-en="TikTok">TikTok</a></li>
-          <li><a href="https://facebook.com/ailabmind" data-es="Facebook" data-en="Facebook">Facebook</a></li>
-          <li><a href="https://youtube.com/@AILabMind" data-es="YouTube" data-en="YouTube">YouTube</a></li>
-          <li><a href="https://instagram.com/ailabmind" data-es="Instagram" data-en="Instagram">Instagram</a></li>
-        </ul>
-      </div>
-      <div>
-        <h3 class="text-white font-semibold mb-2" data-es="Boletín" data-en="Newsletter">Boletín</h3>
-        <input type="email" placeholder="Tu correo electrónico" class="w-full p-3 bg-gray-700 rounded mb-2" data-es-placeholder="Tu correo electrónico" data-en-placeholder="Your email address"/>
-        <button id="subscribe-btn" class="btn-primary w-full" data-es="Suscribirse" data-en="Subscribe">Suscribirse</button>
-      </div>
+    <div>
+    <h3 class="text-white font-semibold mb-2" data-key="brand">AI Lab Mind</h3>
+    <p data-key="email-contact">Email: info@ailabmind.com</p>
     </div>
-    <div class="text-center text-gray-500 text-sm mt-4" data-es="© 2025 AI Lab Mind. Todos los derechos reservados." data-en="© 2025 AI Lab Mind. All rights reserved.">© 2025 AI Lab Mind. Todos los derechos reservados.</div>
-  </footer>
+    <div>
+    <h3 class="text-white font-semibold mb-2" data-key="quick-links"></h3>
+    <ul class="space-y-2">
+    <li><a href="#home" data-key="home"></a></li>
+    <li><a href="#focus" data-key="approach"></a></li>
+    <li><a href="#solutions" data-key="solutions"></a></li>
+    <li><a href="#" target="_blank" data-key="blog" data-es-href="https://ailabmind1.systeme.io/fc2debf7" data-en-href="https://ailabmind1.systeme.io/posts"></a></li>
+    <li><a href="#contact" data-key="contact"></a></li>
+    <li><a href="#faq" data-key="faq"></a></li>
+    </ul>
+    </div>
+    <div>
+    <h3 class="text-white font-semibold mb-2" data-key="follow-us"></h3>
+    <ul class="space-y-2">
+    <li><a href="https://linkedin.com/company/105943016" data-key="linkedin"></a></li>
+    <li><a href="https://tiktok.com/@ailabmind" data-key="tiktok"></a></li>
+    <li><a href="https://facebook.com/ailabmind" data-key="facebook"></a></li>
+    <li><a href="https://youtube.com/@AILabMind" data-key="youtube"></a></li>
+    <li><a href="https://instagram.com/ailabmind" data-key="instagram"></a></li>
+    </ul>
+    </div>
+    <div>
+    <h3 class="text-white font-semibold mb-2" data-key="newsletter"></h3>
+    <input class="w-full p-3 bg-gray-700 rounded mb-2" data-en-placeholder="Your email address" data-es-placeholder="Tu correo electrónico" placeholder="Tu correo electrónico" type="email"/>
+    <button class="btn-primary w-full" data-key="subscribe" id="subscribe-btn"></button>
+    </div>
+    </div>
+    <div class="text-center text-gray-500 text-sm mt-4" data-key="copyright"></div>
+</footer>
 
-  <!-- Scripts -->
-  <script>
+<script>
     // Animación de ondas
     const canvas = document.getElementById('backgroundCanvas'), ctx = canvas.getContext('2d');
     let W,H;
@@ -880,6 +812,73 @@
     }
     requestAnimationFrame(draw);
 
+    // Objeto de traducciones
+    const translations = {
+        es: {
+            brand: "AI Lab Mind",
+            home: "Inicio",
+            approach: "Enfoque",
+            solutions: "Soluciones",
+            blog: "Blog",
+            contact: "Contáctanos",
+            faq: "Preguntas Frecuentes",
+            demo: "Agendar Demo",
+            "quick-links": "Enlaces Rápidos",
+            "follow-us": "Síguenos",
+            newsletter: "Boletín",
+            subscribe: "Suscribirse",
+            "copyright": "© 2025 AI Lab Mind. Todos los derechos reservados.",
+            "email-contact": "Email: info@ailabmind.com",
+            linkedin: "LinkedIn",
+            tiktok: "TikTok",
+            facebook: "Facebook",
+            youtube: "YouTube",
+            instagram: "Instagram",
+            "24-7-support": "Atención 24/7",
+            "more-converted-leads": "Más leads convertidos",
+            "save-hours-follow-up": "Ahorra horas de seguimiento",
+            "no-coding-needed": "Sin programar",
+            "actionable-data": "Datos accionables",
+            "only-what-you-need": "Solo lo que necesitas",
+            "play-mike": "Probar con Mike",
+            "stop-mike": "Detener",
+            "play-iris": "Hablar con Iris",
+            "stop-iris": "Detener"
+        },
+        en: {
+            brand: "AI Lab Mind",
+            home: "Home",
+            approach: "Our Approach",
+            solutions: "Solutions",
+            blog: "Blog",
+            contact: "Contact Us",
+            faq: "FAQ",
+            demo: "Book a Demo",
+            "quick-links": "Quick Links",
+            "follow-us": "Follow Us",
+            newsletter: "Newsletter",
+            subscribe: "Subscribe",
+            "copyright": "© 2025 AI Lab Mind. All rights reserved.",
+            "email-contact": "Email: info@ailabmind.com",
+            linkedin: "LinkedIn",
+            tiktok: "TikTok",
+            facebook: "Facebook",
+            youtube: "YouTube",
+            instagram: "Instagram",
+            "24-7-support": "24/7 Support",
+            "more-converted-leads": "More converted leads",
+            "save-hours-follow-up": "Save hours of follow-up",
+            "no-coding-needed": "No coding needed",
+            "actionable-data": "Actionable data",
+            "only-what-you-need": "Only what you need",
+            "play-mike": "Try with Mike",
+            "stop-mike": "Stop",
+            "play-iris": "Talk to Iris",
+            "stop-iris": "Stop"
+        }
+    };
+
+
     // Datos de los artículos del blog
     const blogPosts = [
       // Automatización
@@ -903,7 +902,7 @@
         categoryDisplayEn: 'Automation',
         titleEs: 'Checklist mental antes de automatizar cualquier negocio',
         titleEn: 'Mental Checklist Before Automating Any Business',
-        descriptionEs: '¿Estás a punto de automatizar? Antes de lanzarte, revisa esta checklist mental para evitar errores costosos.',
+        descriptionEs: '¿Estás a punto de automatizar? Antes de lanzarte, revisa esta checklist mental para evitar errores costos.',
         descriptionEn: 'Are you about to automate? Before you dive in, review this mental checklist to avoid costly mistakes.',
         linkHrefEs: 'https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true', // Enlace a tu página de empresa de LinkedIn
         linkHrefEn: 'https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true', // Enlace a tu página de empresa de LinkedIn
@@ -995,8 +994,7 @@
 
       return `
         <div class="bg-white bg-opacity-10 rounded-2xl p-6 shadow-lg backdrop-blur-md blog-article">
-            <a href="${linkHref}" target="_blank"> <!-- Agregado target="_blank" -->
-                <!-- No se incluye la imagen aquí, ya que los posts del blog se enlazan directamente a LinkedIn -->
+            <a href="${linkHref}" target="_blank">
                 <h3 class="text-xl font-semibold mb-2">${title}</h3>
                 <p class="text-sm text-gray-300 mb-4">${description}</p>
                 <span class="inline-block ${categoryColorClass} text-white text-xs px-2 py-1 rounded mt-2 category-tag" data-category="${post.category}">
@@ -1042,6 +1040,11 @@
             if (latestPostsPerCategory[cat]) {
                 featuredContainer.insertAdjacentHTML('beforeend', createBlogCard(latestPostsPerCategory[cat], lang));
             }
+            // Eliminar los posts destacados del array de todos los posts para evitar duplicados
+            const index = sortedPosts.indexOf(latestPostsPerCategory[cat]);
+            if (index > -1) {
+                sortedPosts.splice(index, 1);
+            }
         });
 
 
@@ -1067,7 +1070,7 @@
             } else {
                 // Quitar las clases de color activo
                 btn.classList.remove('bg-gray-500', 'bg-indigo-500', 'bg-purple-500', 'bg-red-500');
-                // Restaurar las clases de color originales
+                // Restablecer las clases de color originales
                 if (btn.dataset.filter === 'all') btn.classList.add('bg-gray-700', 'hover:bg-gray-600');
                 else if (btn.dataset.filter === 'automation') btn.classList.add('bg-indigo-600', 'hover:bg-indigo-500');
                 else if (btn.dataset.filter === 'strategy') btn.classList.add('bg-purple-600', 'hover:bg-purple-500');
@@ -1090,9 +1093,14 @@
       const irisAudioEs = document.getElementById('iris-audio-es');
       const irisAudioEn = document.getElementById('iris-audio-en');
 
-      // Botones de Mike e Iris
-      const mikeBtn = document.getElementById('mike-btn');
-      const irisBtn = document.getElementById('iris-btn');
+      // Obtener referencias a los botones (ahora con IDs únicos y clases)
+      // Usamos querySelectorAll con las clases para obtener todas las instancias de los botones Mike/Iris
+      const allMikeButtons = document.querySelectorAll('.mike-btn');
+      const allIrisButtons = document.querySelectorAll('.iris-btn');
+
+
+      // Agrupar audios y botones para facilitar el manejo
+      const allAudios = [mikeAudioEs, mikeAudioEn, irisAudioEs, irisAudioEn].filter(Boolean); // Filtrar null/undefined
 
       // Botón de Suscribirse en el footer
       const subscribeBtn = document.getElementById('subscribe-btn');
@@ -1101,37 +1109,68 @@
       const esKoalendarUrl = 'https://koalendar.com/e/ailabmind-es';
       const enKoalendarUrl = 'https://koalendar.com/e/ailabmind-en';
 
-      let currentLang = 'es'; // Definir la variable de idioma aquí
+      // ** Inicialización de currentLang para asegurar que se toma el idioma del HTML si está presente **
+      let currentLang = document.documentElement.lang || 'es';
 
-      // Función para detener todos los audios
-      function stopAllAudios() {
-        if (mikeAudioEs) { mikeAudioEs.pause(); mikeAudioEs.currentTime = 0; }
-        if (mikeAudioEn) { mikeAudioEn.pause(); mikeAudioEn.currentTime = 0; }
-        if (irisAudioEs) { irisAudioEs.pause(); irisAudioEs.currentTime = 0; }
-        if (irisAudioEn) { irisAudioEn.pause(); irisAudioEn.currentTime = 0; }
+      // Función para detener todos los audios y reiniciar su tiempo Y restablecer botones
+      function stopAndResetAudiosAndButtons() {
+        allAudios.forEach(audio => {
+          if (audio) {
+            audio.pause();
+            audio.currentTime = 0;
+          }
+        });
+
+        // Restablecer el texto de los botones a su estado inicial para todos los botones de Mike e Iris
+        allMikeButtons.forEach(btn => {
+          if (btn) btn.textContent = translations[currentLang]['play-mike'];
+        });
+        allIrisButtons.forEach(btn => {
+          if (btn) btn.textContent = translations[currentLang]['play-iris'];
+        });
       }
 
       // Función para mostrar la sección correcta
       function showSection(){
         let key = location.hash.slice(1);
         if (!ids.includes(key)) key='home'; // Si el hash no existe, ir a 'home'
-        pages.forEach(p=> p.classList.toggle('active', p.id===key));
-      }
-
-      // Función para aplicar el idioma
-      function applyLang(){
-        document.querySelectorAll('[data-es][data-en]').forEach(el=>{
-          // Excluir el enlace de navegación del blog si es un elemento que queremos que apunte siempre a LinkedIn
-          // Si el elemento es el botón de idioma, su texto se actualiza de forma diferente
-          if (el !== langBtn && el.tagName !== 'A' && el.getAttribute('href') !== 'https://www.linkedin.com/company/ai-lab-mind/?viewAsMember=true') {
-              el.textContent = currentLang === 'en' ? el.dataset.en : el.dataset.es;
+        pages.forEach(p=> {
+          const isActive = p.id===key;
+          p.classList.toggle('active', isActive);
+          // Si esta página se está volviendo activa, aplicar el idioma a su contenido
+          if (isActive) {
+            applyLang(); // Re-aplicar idioma para asegurar que el lang-content correcto se muestra
           }
         });
+      }
+
+      // Función para aplicar el idioma a todos los elementos con data-key
+      function applyLang(){
+        // Actualizar el texto de elementos que tienen la propiedad data-key
+        document.querySelectorAll("[data-key]").forEach(el => {
+          const key = el.getAttribute("data-key");
+          if (translations[currentLang] && translations[currentLang][key]) {
+              el.textContent = translations[currentLang][key];
+          } else {
+              // Fallback to the key itself if translation is missing (useful for debugging)
+              el.textContent = key;
+          }
+        });
+
+        // Actualizar placeholders de inputs/textareas
         document.querySelectorAll('input[data-es-placeholder], textarea[data-es-placeholder]').forEach(input => {
             input.placeholder = currentLang === 'en' ? input.dataset.enPlaceholder : input.dataset.esPlaceholder;
         });
-        // Modificación aquí: el botón debe mostrar el idioma AL QUE VA A CAMBIAR
+
+        // Actualizar los atributos href de los enlaces con data-es-href/data-en-href
+        document.querySelectorAll('a[data-es-href][data-en-href]').forEach(link => {
+            link.href = currentLang === 'en' ? link.dataset.enHref : link.dataset.esHref;
+        });
+
+        // Modificación del texto del botón de idioma: debe mostrar el idioma AL QUE SE PUEDE CAMBIAR
         langBtn.textContent = currentLang === 'es' ? 'EN' : 'ES';
+
+        // Mostrar/ocultar los bloques de contenido según el idioma activo
         document.querySelectorAll('.lang-content').forEach(contentBlock => {
             if (contentBlock.dataset.lang === currentLang) {
                 contentBlock.classList.add('active');
@@ -1139,13 +1178,22 @@
                 contentBlock.classList.remove('active');
             }
         });
-        // Actualizar los atributos href de los enlaces según el idioma
-        document.querySelectorAll('a[data-es-href][data-en-href]').forEach(link => {
-            link.href = currentLang === 'en' ? link.dataset.enHref : link.dataset.esHref;
-        });
+
+        // Aplicar/remover la clase de transparencia para el fondo de la sección de soluciones
+        const solutionsSection = document.getElementById('solutions');
+        if (solutionsSection) {
+            if (currentLang === 'en') {
+                solutionsSection.classList.add('english-transparent-bg');
+            } else {
+                solutionsSection.classList.remove('english-transparent-bg');
+            }
+        }
 
         // Cargar el contenido del blog para el idioma actual
         loadBlogContent(currentLang);
+
+        // Restablecer el texto de los botones de audio al cambiar de idioma
+        stopAndResetAudiosAndButtons();
       }
 
       // Event Listeners
@@ -1170,34 +1218,87 @@
           navMenu.classList.toggle('py-4');
           navMenu.classList.toggle('px-6');
           navMenu.classList.toggle('z-20'); // Asegura que esté sobre otros elementos
-          navMenu.classList.toggle('items-center'); // Centra los items en el menú móvil
       });
 
-      // Lógica de reproducción de audio para Mike
-      if (mikeBtn) {
-        mikeBtn.addEventListener('click', (event) => {
-          event.preventDefault(); // Evita la redirección a Koalendar
-          stopAllAudios(); // Detiene cualquier audio en reproducción
-          if (currentLang === 'es' && mikeAudioEs) {
-            mikeAudioEs.play();
-          } else if (currentLang === 'en' && mikeAudioEn) {
-            mikeAudioEn.play();
-          }
-        });
-      }
+      // Lógica de reproducción/parada de audio para Mike
+      // Usamos un bucle forEach para adjuntar el listener a AMBOS botones (es/en)
+      allMikeButtons.forEach(btn => {
+        if (btn) {
+          btn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            const audioToControl = (btn.id === 'mike-btn-es' ? mikeAudioEs : mikeAudioEn);
 
-      // Lógica de reproducción de audio para Iris
-      if (irisBtn) {
-        irisBtn.addEventListener('click', (event) => {
-          event.preventDefault(); // Evita la redirección a Koalendar
-          stopAllAudios(); // Detiene cualquier audio en reproducción
-          if (currentLang === 'es' && irisAudioEs) {
-            irisAudioEs.play();
-          } else if (currentLang === 'en' && irisAudioEn) {
-            irisAudioEn.play();
+            if (audioToControl && audioToControl.paused) {
+              // Si el audio está pausado, lo reproducimos
+              stopAndResetAudiosAndButtons(); // Detener todos los audios y restablecer botones
+              try {
+                await audioToControl.play();
+                btn.textContent = translations[currentLang]['stop-mike']; // Cambiar texto a "Detener"/"Stop"
+                console.log("Reproduciendo audio de Mike:", audioToControl.src);
+              } catch (e) {
+                console.error("ERROR DE REPRODUCCIÓN (Mike - click):", e);
+                // No es necesario restablecer el texto aquí, ya lo hace stopAndResetAudiosAndButtons
+              }
+            } else if (audioToControl && !audioToControl.paused) {
+              // Si el audio está reproduciéndose, lo detenemos
+              stopAndResetAudiosAndButtons(); // Esto ya restablecerá el botón
+              console.log("Deteniendo audio de Mike.");
+            }
+          });
+
+          // Listener para restablecer el botón cuando el audio de Mike termine naturalmente
+          const audioForBtn = (btn.id === 'mike-btn-es' ? mikeAudioEs : mikeAudioEn);
+          if (audioForBtn) {
+            audioForBtn.addEventListener('ended', () => {
+              // Solo restablecer si este audio realmente terminó y el botón corresponde al idioma activo
+              if (currentLang === 'es' && btn.id === 'mike-btn-es' || currentLang === 'en' && btn.id === 'mike-btn-en') {
+                btn.textContent = translations[currentLang]['play-mike'];
+                console.log("Audio de Mike ha terminado.");
+              }
+            });
           }
-        });
-      }
+        }
+      });
+
+      // Lógica de reproducción/parada de audio para Iris
+      // Usamos un bucle forEach para adjuntar el listener a AMBOS botones (es/en)
+      allIrisButtons.forEach(btn => {
+        if (btn) {
+          btn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            const audioToControl = (btn.id === 'iris-btn-es' ? irisAudioEs : irisAudioEn);
+
+            if (audioToControl && audioToControl.paused) {
+              // Si el audio está pausado, lo reproducimos
+              stopAndResetAudiosAndButtons(); // Detener todos los audios y restablecer botones
+              try {
+                await audioToControl.play();
+                btn.textContent = translations[currentLang]['stop-iris']; // Cambiar texto a "Detener"/"Stop"
+                console.log("Reproduciendo audio de Iris:", audioToControl.src);
+              } catch (e) {
+                console.error("ERROR DE REPRODUCCIÓN (Iris - click):", e);
+                // No es necesario restablecer el texto aquí, ya lo hace stopAndResetAudiosAndButtons
+              }
+            } else if (audioToControl && !audioToControl.paused) {
+              // Si el audio está reproduciéndose, lo detenemos
+              stopAndResetAudiosAndButtons(); // Esto ya restablecerá el botón
+              console.log("Deteniendo audio de Iris.");
+            }
+          });
+
+          // Listener para restablecer el botón cuando el audio de Iris termine naturalmente
+          const audioForBtn = (btn.id === 'iris-btn-es' ? irisAudioEs : irisAudioEn);
+          if (audioForBtn) {
+            audioForBtn.addEventListener('ended', () => {
+              // Solo restablecer si este audio realmente terminó y el botón corresponde al idioma activo
+              if (currentLang === 'es' && btn.id === 'iris-btn-es' || currentLang === 'en' && btn.id === 'iris-btn-en') {
+                btn.textContent = translations[currentLang]['play-iris'];
+                console.log("Audio de Iris ha terminado.");
+              }
+            });
+          }
+        }
+      });
 
       // Redirigir botón de Suscribirse a la URL correcta (se mantiene la redirección)
       if (subscribeBtn) {
@@ -1218,11 +1319,9 @@
       });
 
       // Inicialización
-      showSection();
-      applyLang(); // Apply language on load to set initial links and button URLs and load blog content
+      showSection(); // Muestra la sección inicial
+      applyLang(); // Aplica el idioma al cargar la página para establecer los enlaces, textos y contenido del blog
     });
   </script>
 </body>
 </html>
-<!-- CI test -->
-<!-- CI test -->
